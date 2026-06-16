@@ -22,7 +22,11 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
     if (_formKey.currentState!.validate()) {
       Navigator.pushReplacement(
         context,
@@ -126,9 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: () async {
-                          UserCredential userCredential = await FirebaseAuth
-                              .instance
-                              .signInAnonymously();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
