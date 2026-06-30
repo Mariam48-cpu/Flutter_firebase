@@ -1,3 +1,4 @@
+import 'package:ecommerce_app_api_26/features/cart/presentation/favourite_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app_api_26/features/home/presentation/screens/home_screen.dart';
 import 'package:ecommerce_app_api_26/features/categories/presentation/screens/categories_screen.dart';
@@ -18,6 +19,7 @@ class _MainWrapperState extends State<MainWrapper> {
     const HomeScreen(),
     const CategoriesScreen(),
     const CartScreen(),
+    const FavoritesScreen(),
     const ProfileScreen(),
   ];
 
@@ -39,7 +41,9 @@ class _MainWrapperState extends State<MainWrapper> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categories'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
+           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+
         ],
       ),
     );

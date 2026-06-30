@@ -16,26 +16,49 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  getProducts() {
+  void getProducts() {
     productRefrence = FirebaseFirestore.instance.collection('products');
+  }
+
+  String orderByField = 'name';
+
+  TextEditingController searchController = TextEditingController();
+  TextEditingController nameController = TextEditingController(),
+      descriptionController = TextEditingController(),
+      priceController = TextEditingController(),
+      quantityController = TextEditingController(),
+      imageUrlController = TextEditingController();
+
+  void updateQuantity(DocumentReference documentReference) async {
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(documentReference);
+        double quantity = snapshot['quantity'];
+        if (quantity <= 0) {
+          throw Exception("Out of stock");
+        }
+        transaction.update(documentReference, {'quantity': quantity - 1});
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> dummyProducts = List.generate(
-      10,
-      (index) => {
-        'id': index,
-        'title': 'Product ${index + 1}',
-        'description': 'Modern design for daily life',
-        'price': (index + 1) * 20.0,
-        'image': 'https://via.placeholder.com/150',
-      },
-    );
-    TextEditingController _nameController = TextEditingController(),
-        _descriptionController = TextEditingController(),
-        _priceController = TextEditingController(),
-        _imageUrlController = TextEditingController();
+    // final List<Map<String, dynamic>> dummyProducts = List.generate(
+    //   10,
+    //   (index) => {
+    //     'id': index,
+    //     'title': 'Product ${index + 1}',
+    //     'description': 'Modern design for daily life',
+    //     'price': (index + 1) * 20.0,
+    //     'image': 'https://via.placeholder.com/150',
+    //   },
+    // );
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
@@ -48,29 +71,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 spacing: 10,
                 children: [
                   TextField(
-                    controller: _nameController,
+                    controller: nameController,
                     decoration: InputDecoration(labelText: 'Name'),
                   ),
                   TextField(
-                    controller: _descriptionController,
+                    controller: descriptionController,
                     decoration: InputDecoration(labelText: 'Description'),
                   ),
                   TextField(
-                    controller: _priceController,
+                    controller: priceController,
                     decoration: InputDecoration(labelText: 'Price'),
                   ),
                   TextField(
-                    controller: _imageUrlController,
+                    controller: quantityController,
+                    decoration: InputDecoration(labelText: 'quantity'),
+                  ),
+                  TextField(
+                    controller: imageUrlController,
                     decoration: InputDecoration(labelText: 'Image Url'),
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      await productRefrence.add({
-                        'name': _nameController.text,
-                        'desc': _descriptionController.text,
-                        'price': double.parse(_priceController.text),
-                        'image': _imageUrlController.text,
+                      await productRefrence.doc(nameController.text).set({
+                        'name': nameController.text,
+                        'desc': descriptionController.text,
+                        'price': double.parse(priceController.text),
+                        'image': imageUrlController.text,
+                        'quantity': double.parse(quantityController.text),
                       });
+                      Navigator.pop(context);
                     },
                     child: Text("Add Product"),
                   ),
@@ -124,27 +153,84 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Search Bar
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // Search
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: searchController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          hintText: 'Search products...',
+                          border: InputBorder.none,
+                          icon: Icon(Icons.search, color: Colors.blue),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search products...',
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search, color: Colors.blue),
                   ),
-                ),
+
+                  const SizedBox(width: 10),
+
+                  // Sort
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: orderByField,
+                          isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'name',
+                              child: Text('Name'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'price',
+                              child: Text('Price'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'desc',
+                              child: Text('Description'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              orderByField = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             // Categories
@@ -185,12 +271,28 @@ class _HomeScreenState extends State<HomeScreen> {
             // Products Grid
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: FutureBuilder(
-                future: productRefrence.get(),
+              child: StreamBuilder(
+                stream: productRefrence
+                    .orderBy(orderByField, descending: false)
+                    .snapshots(),
                 builder: (context, asyncSnapshot) {
                   if (!asyncSnapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }
+                  final docs = asyncSnapshot.data!.docs;
+                  final filteredProducts = docs.where((doc) {
+                    final product = doc.data();
+                    return product['name'].toString().toLowerCase().contains(
+                          searchController.text.toLowerCase(),
+                        ) ||
+                        product['desc'].toString().toLowerCase().contains(
+                          searchController.text.toLowerCase(),
+                        ) ||
+                        product['price'].toString().contains(
+                          searchController.text,
+                        );
+                  }).toList();
+
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -201,15 +303,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
-                    itemCount: asyncSnapshot.data!.docs.length,
+                    // itemCount: asyncSnapshot.data!.docs.length,
+                    itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
-                      final product = asyncSnapshot.data!.docs[index].data();
-                      print(product);
+                      // final product = asyncSnapshot.data!.docs[index].data();
+                      final product = filteredProducts[index].data();
                       return ProductCard(
+                        id: filteredProducts[index].id,
                         title: product['name'],
-                        price: product['price'],
+                        price: (product['price'] as num).toDouble(),
+                        quantity: (product['quantity'] as num).toInt(),
                         description: product['desc'],
                         image: product['image'],
+                        onAdd: () {
+                          updateQuantity(filteredProducts[index].reference);
+                        },
                       );
                     },
                   );

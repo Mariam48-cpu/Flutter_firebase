@@ -1,6 +1,7 @@
 import 'package:ecommerce_app_api_26/features/auth/presentation/screens/login_screen.dart';
 import 'package:ecommerce_app_api_26/features/auth/presentation/screens/signup_screen.dart';
 import 'package:ecommerce_app_api_26/features/home/presentation/screens/home_screen.dart';
+import 'package:ecommerce_app_api_26/features/main_wrapper/presentation/screens/main_wrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app_api_26/utils/app_theme.dart';
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
       title: 'Ecommerce App',
       debugShowCheckedModeBanner: false,
       theme: appTheme,
-      home: const HomeScreen(),
+      home: const MainWrapper(),
     );
   }
 }

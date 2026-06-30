@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_api_26/features/auth/presentation/screens/login_screen.dart';
 import 'package:ecommerce_app_api_26/firebase_helper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -22,22 +24,30 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-  
 
-  void _signup() async {
+  Future<void> signup() async {
     if (_formKey.currentState!.validate()) {
       try {
         await FirebaseHelper().signUp(
           _emailController.text,
           _passwordController.text,
         );
+        FirebaseAuth.instance.currentUser!.sendEmailVerification();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_nameController.text)
+            .set({
+              'name': _nameController.text,
+              'uid': FirebaseAuth.instance.currentUser!.uid,
+            });
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(' Account created successfully')),
+          const SnackBar(content: Text('Account created successfully')),
         );
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -142,7 +152,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _signup,
+                          onPressed: signup,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             foregroundColor: Colors.white,
